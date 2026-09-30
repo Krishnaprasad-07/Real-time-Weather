@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Real-time weather for any city.">
+  <title>Weather</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/sky.js" defer></script>
+  <script src="/main.js" defer></script>
+</head>
+<body data-theme="default">
+  <canvas id="sky" class="sky" aria-hidden="true"></canvas>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <span class="brand-name">
+        <span data-icon="cloudSun"></span>
+        <span>Weather</span>
+      </span>
+
+      <form class="search" id="search-form" role="search" novalidate>
+        <label for="city-input" class="visually-hidden">City name</label>
+        <span class="search-icon" data-icon="search"></span>
+        <input id="city-input" name="city" type="text" placeholder="Search for a city"
+               autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100">
+        <button type="submit" id="search-button">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Search</span>
+        </button>
+      </form>
+
+      <div class="unit-toggle" role="group" aria-label="Temperature unit">
+        <button type="button" data-unit="C" aria-pressed="true">°C</button>
+        <button type="button" data-unit="F" aria-pressed="false">°F</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout" id="layout">
+    <section class="panel" id="panel">
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+      <section class="empty" id="empty">
+        <span data-icon="cloudSun"></span>
+        <p>Search for a city to see current conditions.</p>
+      </section>
+
+      <section class="result" id="result" hidden>
+        <div class="location">
+          <h1 id="city"></h1>
+          <span class="country" id="country"></span>
+        </div>
+        <p class="local-time"><span id="local-time"></span><span id="observed"></span></p>
+
+        <div class="current">
+          <span class="condition-icon" id="condition-icon"></span>
+          <div>
+            <p class="temperature" id="temperature"></p>
+            <p class="condition" id="condition"></p>
+          </div>
+        </div>
+
+        <dl class="tiles">
+          <div class="tile">
+            <dt><span data-icon="thermometer"></span>Feels like</dt>
+            <dd id="feels-like"></dd>
+          </div>
+          <div class="tile">
+            <dt><span data-icon="droplet"></span>Humidity</dt>
+            <dd id="humidity"></dd>
+          </div>
+          <div class="tile">
+            <dt><span data-icon="wind"></span>Wind</dt>
+            <dd id="wind"></dd>
+          </div>
+        </dl>
+      </section>
+
+      <footer class="footer">
+        Data from <a href="https://openweathermap.org" target="_blank" rel="noopener">OpenWeatherMap</a>
+      </footer>
+    </section>
+
+    <section class="panel hourly-panel" id="hourly" hidden aria-labelledby="hourly-heading">
+      <h2 class="panel-heading" id="hourly-heading">Next 24 hours</h2>
+      <p class="card-message" role="status"></p>
+      <ol class="hourly-list card-content" id="hourly-list"></ol>
+    </section>
+
+    <section class="panel daily-panel" id="daily" hidden aria-labelledby="daily-heading">
+      <h2 class="panel-heading" id="daily-heading">5-day forecast</h2>
+      <p class="card-message" role="status"></p>
+      <ol class="daily-list card-content" id="daily-list"></ol>
+    </section>
+
+    <section class="panel details-panel" id="details" hidden aria-labelledby="details-heading">
+      <h2 class="panel-heading" id="details-heading">Details</h2>
+
+      <div class="sun" id="sun">
+        <svg class="sun-arc" viewBox="0 0 200 108" aria-hidden="true">
+          <path class="arc-track" d="M10 100 A90 90 0 0 1 190 100" pathLength="100"/>
+          <path class="arc-progress" id="arc-progress" d="M10 100 A90 90 0 0 1 190 100" pathLength="100"/>
+          <line class="horizon" x1="0" y1="100" x2="200" y2="100"/>
+          <circle class="sun-dot" id="sun-dot" cx="10" cy="100" r="6"/>
+        </svg>
+        <div class="sun-times">
+          <div>
+            <span class="label"><span data-icon="sunrise"></span>Sunrise</span>
+            <strong id="sunrise"></strong>
+          </div>
+          <p class="daylight">
+            <span class="day-length" id="day-length"></span>
+            <span id="daylight"></span>
+          </p>
+          <div class="sun-time-end">
+            <span class="label"><span data-icon="sunset"></span>Sunset</span>
+            <strong id="sunset"></strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="wind-card">
+        <svg class="compass" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="compass-ring" cx="32" cy="32" r="29"/>
+          <text class="compass-label" x="32" y="11">N</text>
+          <text class="compass-label" x="55" y="34.5">E</text>
+          <text class="compass-label" x="32" y="58">S</text>
+          <text class="compass-label" x="9" y="34.5">W</text>
+          <g class="wind-arrow" id="wind-arrow">
+            <path d="M32 17 L36.5 27 L33.4 25.8 L33.4 46 L30.6 46 L30.6 25.8 L27.5 27 Z"/>
+          </g>
+        </svg>
+        <div class="wind-text">
+          <span class="label">Wind</span>
+          <strong id="wind-direction"></strong>
+          <span class="wind-detail" id="wind-detail"></span>
+          <span class="wind-force" id="wind-force"></span>
+        </div>
+      </div>
+
+      <dl class="tiles tiles-grid">
+        <div class="tile">
+          <dt><span data-icon="gauge"></span>Pressure</dt>
+          <dd id="pressure"></dd>
+        </div>
+        <div class="tile">
+          <dt><span data-icon="eye"></span>Visibility</dt>
+          <dd id="visibility"></dd>
+        </div>
+        <div class="tile">
+          <dt><span data-icon="cloud"></span>Cloud cover</dt>
+          <dd id="clouds"></dd>
+        </div>
+        <div class="tile">
+          <dt><span data-icon="droplets"></span>Dew point</dt>
+          <dd id="dew-point"></dd>
+          <dd class="tile-note" id="comfort"></dd>
+        </div>
+        <div class="tile">
+          <dt><span data-icon="rain"></span>Precipitation (1h)</dt>
+          <dd id="precipitation"></dd>
+          <dd class="tile-note" id="precipitation-type"></dd>
+        </div>
+        <div class="tile">
+          <dt><span data-icon="moon"></span>Moon</dt>
+          <dd class="moon-value"><span class="moon-icon" id="moon-icon"></span><span id="moon-illumination"></span></dd>
+          <dd class="tile-note" id="moon-phase"></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="panel air-panel" id="air" hidden aria-labelledby="air-heading">
+      <h2 class="panel-heading" id="air-heading">Air quality</h2>
+      <p class="card-message" role="status"></p>
+      <div class="card-content">
+        <div class="aqi">
+          <div class="aqi-badge" id="aqi-badge">
+            <span id="aqi-index"></span><small>/5</small>
+          </div>
+          <div>
+            <strong class="aqi-label" id="aqi-label"></strong>
+            <p class="aqi-advice" id="aqi-advice"></p>
+          </div>
+        </div>
+
+        <div class="aqi-scale" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+          <i class="aqi-marker" id="aqi-marker"></i>
+        </div>
+
+        <dl class="tiles tiles-grid-3">
+          <div class="tile"><dt>PM2.5</dt><dd id="pm2_5"></dd></div>
+          <div class="tile"><dt>PM10</dt><dd id="pm10"></dd></div>
+          <div class="tile"><dt>O₃</dt><dd id="o3"></dd></div>
+          <div class="tile"><dt>NO₂</dt><dd id="no2"></dd></div>
+          <div class="tile"><dt>SO₂</dt><dd id="so2"></dd></div>
+          <div class="tile"><dt>CO</dt><dd id="co"></dd></div>
+        </dl>
+        <p class="panel-note">Concentrations in μg/m³. Index runs from 1 (good) to 5 (very poor).</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
